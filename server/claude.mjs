@@ -6,7 +6,9 @@ export const MODEL = () => process.env.CLAUDE_MODEL || 'claude-opus-5-5';
 export const aiEnabled = () => !!process.env.ANTHROPIC_API_KEY;
 
 let client = null;
-const getClient = () => (client ??= new Anthropic({ timeout: 20_000, maxRetries: 1 }));
+// User-scoped keys (sk-ant-usr-…) must name a workspace via the anthropic-workspace-id header.
+const workspaceHeaders = () => (process.env.ANTHROPIC_WORKSPACE_ID ? { 'anthropic-workspace-id': process.env.ANTHROPIC_WORKSPACE_ID } : undefined);
+const getClient = () => (client ??= new Anthropic({ timeout: 20_000, maxRetries: 1, defaultHeaders: workspaceHeaders() }));
 
 // ---------- optional persona.mjs (owned by the lead) ----------
 let personaMod = null;
@@ -170,7 +172,7 @@ export async function npcReply({ ped, history, message, context }) {
     console.warn('[persona] buildNpcSystemPrompt failed:', err.message);
   }
   system ||= defaultNpcSystem(ped, context);
-  const { refusal, text } = await ask({ system, messages: buildMessages(history, message) });
+  const { refusal, text } = await ask({ system, maxTokens: 300, messages: buildMessages(history, message) });
   return refusal || !text ? refusalLine() : text;
 }
 

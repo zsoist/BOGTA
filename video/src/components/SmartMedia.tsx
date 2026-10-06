@@ -8,10 +8,13 @@ import { ParallaxScene, hasParallax } from './ParallaxScene';
 import { SLOT_BY_NAME, type CamState, type Fallback, type SlotName } from '../footage';
 import { IMG, art, has } from '../lib/assets';
 import { beatFrames } from '../beats';
+import { MANIFEST } from '../generated/manifest';
 
 export type MediaOrigin = 'footage' | 'ai' | 'parallax' | 'art' | 'still';
 export interface ResolvedMedia {
   origin: MediaOrigin;
+  /** path inside public/ (for durations lookup) */
+  file?: string;
   /** staticFile url (video or image) */
   src?: string;
   fallback?: Fallback;
@@ -31,8 +34,8 @@ export const resolveMedia = (name: string): ResolvedMedia => {
   const slot = (SLOT_BY_NAME as Record<string, (typeof SLOT_BY_NAME)[SlotName]>)[name];
   const fb = slot?.fallback;
   if (has(`footage/${name}.mp4`)) return { origin: 'footage', src: staticFile(`footage/${name}.mp4`), fallback: fb };
-  if (has(`ai/${name}.mp4`)) return { origin: 'ai', src: staticFile(`ai/${name}.mp4`), fallback: fb };
-  if (fb?.art && has(`ai/${fb.art}.mp4`)) return { origin: 'ai', src: staticFile(`ai/${fb.art}.mp4`), fallback: fb };
+  if (has(`ai/${name}.mp4`)) return { origin: 'ai', src: staticFile(`ai/${name}.mp4`), file: `ai/${name}.mp4`, fallback: fb };
+  if (fb?.art && has(`ai/${fb.art}.mp4`)) return { origin: 'ai', src: staticFile(`ai/${fb.art}.mp4`), file: `ai/${fb.art}.mp4`, fallback: fb };
   if (fb?.parallax && hasParallax()) return { origin: 'parallax', fallback: fb };
   const direct = art(name);
   if (direct) return { origin: 'art', src: direct, fallback: fb };
@@ -42,14 +45,19 @@ export const resolveMedia = (name: string): ResolvedMedia => {
   return { origin: 'still', src: IMG.cover };
 };
 
-const AiClip: React.FC<{ src: string; duration: number; flip?: boolean; grade?: string }> = ({ src, duration, flip, grade }) => {
+const AiClip: React.FC<{ src: string; file: string; duration: number; flip?: boolean; grade?: string }> = ({ src, file, duration, flip, grade }) => {
   const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const clipSec = MANIFEST.durations[file];
+  const needSec = duration / fps;
+  // short clip -> stretch with slow-motion (down to 0.55x) instead of an obvious loop; long clip -> just plays the first part
+  const rate = clipSec ? Math.min(1, Math.max(0.55, (clipSec - 0.15) / needSec)) : 1;
   const p = ramp(frame, [0, duration], [0, 1], EZ.camera);
   const sc = 1.02 + 0.09 * p;
   return (
     <AbsoluteFill style={{ background: '#000', overflow: 'hidden' }}>
       <AbsoluteFill style={{ transform: `scale(${sc}) translateX(${(flip ? 1 : -1) * p * 1.2}%) ${flip ? 'scaleX(-1)' : ''}`, filter: grade }}>
-        <Video src={src} muted loop objectFit="cover" />
+        <Video src={src} muted loop playbackRate={rate} objectFit="cover" />
       </AbsoluteFill>
     </AbsoluteFill>
   );
@@ -89,7 +97,7 @@ export const SmartMedia: React.FC<SmartMediaProps> = ({ name, duration, trimBeat
   }
   if (m.origin === 'ai') {
     // AI clips are short and generic: loop them and add a slow push-in so they feel directed.
-    return <AiClip src={m.src!} duration={duration} flip={flip} grade={[GRADE_VIDEO, fb?.grade, grade].filter(Boolean).join(' ')} />;
+    return <AiClip src={m.src!} file={m.file!} duration={duration} flip={flip} grade={[GRADE_VIDEO, fb?.grade, grade].filter(Boolean).join(' ')} />;
   }
   if (m.origin === 'parallax') {
     return <ParallaxScene duration={duration} zoom={1.2} truck={flip ? 3 : -3} />;

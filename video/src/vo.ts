@@ -1,6 +1,7 @@
 // Voice-over schedule. Lines come from docs/ELEVENLABS.md (video/audio/vo/vo-01..08.mp3, synced to public/vo/).
 // Durations measured with ffprobe/silencedetect. Everything is placed in BEATS so it stays on the grid.
 import { beatToFrame } from './beats';
+import { STATS } from './stats';
 
 export interface VoSub {
   text: string;
@@ -45,7 +46,8 @@ export const VO_LINES: VoLine[] = [
   { id: 'vo-04c', file: 'vo-04-3.mp3', startBeat: 58, dur: 0.61, subs: [] },
   { id: 'vo-04d', file: 'vo-04-4.mp3', startBeat: 80, dur: 0.73, subs: [] },
   { id: 'vo-05', file: 'vo-05.mp3', startBeat: 95, dur: 2.18, subs: [{ text: VO_TEXT['vo-05'], at: 0, until: 2.6 }] },
-  { id: 'vo-06', file: 'vo-06.mp3', startBeat: 105, dur: 7.8, subs: [] },
+  // vo-06 says "siete agentes / noventa minutos" -> muted; the on-screen text follows STATS instead
+  { id: 'vo-06', file: 'vo-06.mp3', startBeat: 105, dur: 7.8, volume: 0, subs: [{ text: `${STATS.minutes} minutos. ${STATS.agents} agentes. Una Bogotá.`, at: 11.5, until: 16 }] },
   { id: 'vo-07', file: 'vo-07.mp3', startBeat: 138, dur: 1.21, subs: [] },
   { id: 'vo-08', file: 'vo-08.mp3', startBeat: 141, dur: 2.37, subs: [] },
 ];

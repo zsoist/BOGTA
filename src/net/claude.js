@@ -10,64 +10,7 @@ function pickFresh(key, arr) {
   return line;
 }
 
-// ---------- offline banks ----------
-const NPC_LINES = {
-  vendor: [
-    '¡A la orden, a la orden! Tinto calientico, empanada a dos mil, ¿qué le provoca, veci?',
-    'Lléveme una oblea con arequipe, que hoy está regalada... bueno, casi regalada, sumercé.',
-    'Mango biche con sal y limón, ¡para que se le despierte hasta el alma!',
-    'Ayer vendí tanto que hoy me toca madrugar al doble. ¡Y todavía no llueve!',
-    'Si ve policía, me avisa, ¿sí? Que mi carrito no tiene permiso ni para respirar.',
-    'Mazorca asadita, mazorca con mantequilla... ¡mazorca para el frío rolo!',
-  ],
-  walker: [
-    '¿Qué más, parce? Qué frío tan bravo el de hoy, ¿no?',
-    'Esa ruana no es moda, es supervivencia. Aquí llueve a las tres y uno nunca aprende.',
-    'Tranquilo, sumercé, que en Bogotá todo se demora, hasta el semáforo en verde.',
-    'Vea, cuidado con el hueco de la esquina, que ya tiene hasta nombre y apellido.',
-    'Yo solo voy a coger el TransMilagro, pero va tan lleno que mejor camino.',
-    'Qué chimba de ciudad, aunque uno viva en trancón permanente.',
-  ],
-  student: [
-    '¡Parce, llegué tarde otra vez! El profe me va a matar... con una tarea más.',
-    'Tengo parcial a las siete y no he leído ni el título. Chévere todo.',
-    'Estudiar en Santo Tomás es bacano, lo duro es el bus de ida y vuelta.',
-    '¿Hacemos vaca para unas onces? Me quedan mil quinientos pesos.',
-    'Ese Build Day de la U está buenísimo, hay robots y todo. ¡Pásese!',
-    'Mi mochila pesa más que mi autoestima. Pero seguimos, ¿no?',
-  ],
-  oficinista: [
-    'Perdone, voy tarde a una reunión que pudo ser un correo. ¡Con permiso!',
-    'Hoy me toca pico y placa y mi jefe cree que el carro vuela.',
-    'Mi corrientazo de Doña Gloria es lo único que me mantiene cuerdo, veci.',
-    'Llevo veinte minutos en la fila del TransMilagro. Veinte. Minutos. Sumercé.',
-    'Traje paraguas, así que obviamente hoy no llueve. La vida es paila.',
-    'Una agenda llena, el café frío y el jefe preguntando por el informe. Todo normal.',
-  ],
-  abuela: [
-    'Ay, mijito, ¿ya almorzó? Venga le doy un pan de yuca, mi vida.',
-    'Cuídese en la calle, que los carros hoy andan como locos, ¡Dios guarde!',
-    'En mis tiempos, la Séptima era pura calma y chocolate con queso.',
-    'Mi vida, abríguese bien, que el frío rolo no perdona a nadie.',
-    'Yo ya le dije a mi nieto que no se suba a esas motos. ¡Ni a las bicis!',
-    'Venga pa\' acá, que le tengo unas onces: almojábana calientica.',
-  ],
-  policia: [
-    'Buenas, ciudadano. Recuerde: el pico y placa no es una sugerencia.',
-    'Circule con cuidado, que el único que puede correr aquí es el semáforo.',
-    '¿Todo en orden, sumercé? Cualquier novedad me avisa, ¿bueno?',
-    'Con mucho respeto: ese carro no se parquea en la ciclovía.',
-    'Si ve algo sospechoso me avisa. Si ve un hueco, también, pero ya no hay presupuesto.',
-    'Tranquilo, solo estoy vigilando el trancón. Hoy va ganando el trancón.',
-  ],
-};
-const NPC_WANTED = {
-  vendor: ['¡Ay, no, la policía! Hágase pa\' allá, que me espantan los clientes.', 'Shhh... sumercé, no me comprometa, que esos tombos me conocen.'],
-  policia: ['¡Alto ahí, ciudadano! ¡Pare el carro, por favor, que me cuesta el turno!', 'Está en problemas, sumercé. Entréguese y le invito un tinto.'],
-  _default: ['¡Uy, mucho ruido de sirenas por acá! ¿Usted qué hizo, parce?', 'Mejor no me cuente nada, que yo no vi nada, veci.'],
-};
-const NPC_RAIN = ['Qué lluvia tan fuerte, ¡justo a las tres como siempre!', 'Ya empezó el aguacero, ¿no que "llueve a las tres"? Pues acertaron.'];
-
+// ---------- offline NPC dialogue: see the intent engine below ----------
 const RADIO_LINES = {
   trancon: [
     'Trancón al Aire: la Séptima está detenida, la Caracas también, y mi paciencia, ni se diga.',
@@ -99,12 +42,6 @@ const RADIO_LINES = {
   ],
 };
 
-export function offlineNpcReply(ped = {}, context = {}) {
-  const kind = NPC_LINES[ped.kind] ? ped.kind : 'walker';
-  if (context?.wanted > 0 && Math.random() < 0.7) return pickFresh(`w-${kind}`, NPC_WANTED[kind] || NPC_WANTED._default);
-  if (context?.raining && Math.random() < 0.3) return pickFresh('rain', NPC_RAIN);
-  return pickFresh(`npc-${kind}`, NPC_LINES[kind]);
-}
 export function offlineRadioLine(station = {}) {
   const id = station.id && RADIO_LINES[station.id] ? station.id : station.genre === 'talk' ? 'trancon' : '_default';
   return pickFresh(`radio-${id}`, RADIO_LINES[id]);

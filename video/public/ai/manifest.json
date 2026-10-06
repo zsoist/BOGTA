@@ -22,7 +22,7 @@
       "source": "video/public/art/panel-01.png",
       "model": "bytedance/seedance-2.0-fast/image-to-video",
       "seconds": 5,
-      "cost": 0.5873,
+      "cost": 0.2931,
       "resolution": "834x1112",
       "prediction": "5f3be7c5c262455b8cf98fddea6614af",
       "prompt": "The yellow taxi drifts sideways through the wet street, sheets of rain spray flying off its tires, headlights glowing, reflections streaking on the asphalt; the camera tracks slightly alongside with dynamic energy.",
@@ -56,7 +56,7 @@
       "source": "video/public/art/panel-07.png",
       "model": "bytedance/seedance-2.0-fast/image-to-video",
       "seconds": 5,
-      "cost": 0.5891,
+      "cost": 0.2931,
       "resolution": "834x1112",
       "prediction": "e04b358fe2c647c1a88bbc406e0b04fb",
       "prompt": "The tall skyscraper tower LED facade cycles through rainbow colors, glowing reflections shifting on the wet plaza pavement, light rain falling, slow upward camera tilt, street lamps glowing.",
@@ -67,6 +67,79 @@
       },
       "fps": 60,
       "interp": "mci"
+    },
+    {
+      "name": "makingof",
+      "source": "video/public/art/makingof.png",
+      "model": "bytedance/seedance-2.0-fast/image-to-video",
+      "seconds": 5,
+      "cost": 0.2931,
+      "resolution": "1280x720",
+      "prediction": "70af23c3440544e4b0b010a8dcc672cd",
+      "prompt": "Little robots busily building a city on a laptop, bright welding sparks flying, glowing lights flickering, slow cinematic orbit camera around the scene.",
+      "generatedAt": "2026-10-06T00:28:45.260Z"
+    },
+    {
+      "name": "title-loop",
+      "source": "assets/cover.png",
+      "model": "bytedance/seedance-2.0-fast/image-to-video",
+      "seconds": 5,
+      "cost": 0.2927,
+      "resolution": "1280x720",
+      "prediction": "3b913ce3991e42d39cbb85eba39d73d2",
+      "prompt": "Subtle living cover art: gentle rain falling, car headlights glinting and flickering on the wet street, neon signs softly pulsing, mist drifting over the mountains, very slow cinematic push-in camera. Calm ambient motion, nothing sudden.",
+      "generatedAt": "2026-10-06T00:39:07.221Z",
+      "files": {
+        "web": "assets/video/title-loop.mp4"
+      },
+      "fps": 60,
+      "interp": "mci"
+    },
+    {
+      "name": "panel-06",
+      "source": "video/public/art/panel-06.png",
+      "model": "bytedance/seedance-2.0-fast/image-to-video",
+      "seconds": 5,
+      "cost": 0.2946,
+      "resolution": "834x1112",
+      "prediction": "f955928f1849445ba25f6fc3cae20293",
+      "prompt": "Golden hour timelapse over Monserrate: storm clouds roll and drift across the mountain sky, golden sunset light moving across the church and hillside, city lights slowly switching on in the valley below; slow gentle camera push.",
+      "generatedAt": "2026-10-06T00:41:16.832Z",
+      "files": {
+        "trailer": "video/public/ai/panel-06.mp4",
+        "web": "video/public/ai/web/panel-06.mp4"
+      },
+      "fps": 60,
+      "interp": "mci"
+    },
+    {
+      "name": "endcard",
+      "source": "video/public/art/endcard.png",
+      "model": "bytedance/seedance-2.0-fast/image-to-video",
+      "seconds": 5,
+      "cost": 0.2927,
+      "resolution": "1280x720",
+      "prediction": "75b68a7e31fb4b18a7ff457754b851bf",
+      "prompt": "Slow aerial drift over the night panorama of Bogotá, thousands of city lights twinkling, clouds slowly moving over the mountains, gentle parallax; the upper center of the frame stays calm and empty.",
+      "generatedAt": "2026-10-06T00:49:02.657Z"
     }
-  ]
+  ],
+  "lost": [
+    {
+      "name": "title-loop",
+      "cost": 0.2931,
+      "note": "generated+billed but poll/download hit a transient 'fetch failed' before the result URL was saved (no retry in first script version); output unrecoverable, no prediction id recorded"
+    },
+    {
+      "name": "panel-06",
+      "cost": 0.2931,
+      "note": "generated+billed but poll/download hit a transient 'fetch failed' before the result URL was saved (no retry in first script version); output unrecoverable, no prediction id recorded"
+    },
+    {
+      "name": "endcard",
+      "cost": 0.2931,
+      "note": "generated+billed but poll/download hit a transient 'fetch failed' before the result URL was saved (no retry in first script version); output unrecoverable, no prediction id recorded"
+    }
+  ],
+  "pending": {}
 }

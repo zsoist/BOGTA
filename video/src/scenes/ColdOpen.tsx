@@ -30,7 +30,7 @@ export const ColdOpen: React.FC<{ cues?: ColdOpenCues }> = ({ cues = COLD_MASTER
   // --- lightning ---
   const hits = cues.lightning.map((x) => b(x));
   const bolt = flash(frame, hits, 0.16);
-  const ambient = 0.1 + ramp(frame, [0, total * 0.75], [0, 0.1], EZ.soft) + ramp(frame, [b(cues.clockFlip), b(cues.slam[0])], [0, 0.16], EZ.out); // the cerros are barely visible between strikes
+  const ambient = 0.1 + ramp(frame, [0, total * 0.75], [0, 0.1], EZ.soft) + ramp(frame, [b(cues.clockFlip), b(cues.slam[0])], [0, 0.34], EZ.out); // the cerros are barely visible between strikes
   const bright = ambient + bolt * 1.5;
   const flipF = b(cues.clockFlip);
   const slam0 = b(cues.slam[0]);
@@ -88,14 +88,14 @@ export const ColdOpen: React.FC<{ cues?: ColdOpenCues }> = ({ cues = COLD_MASTER
       {/* SIEMPRE LLUEVE A LAS 3 */}
       <KineticText
         start={0}
-        size={portrait ? 230 : 250}
+        size={portrait ? 210 : 205}
         stagger={0}
         shakeAmp={26}
         words={[
           { text: 'SIEMPRE', at: b(cues.slam[0]), color: '#fff' },
           { text: 'LLUEVE', at: b(cues.slam[1]), color: '#fff' },
           { text: 'A LAS', at: b(cues.slam[2]), color: '#fff', scale: 0.85 },
-          { text: '3', at: b(cues.slam[3]), color: C.gold, scale: 2.1, rot: -4 },
+          { text: '3', at: b(cues.slam[3]), color: C.gold, scale: 2.2, rot: -4 },
         ]}
         style={{ paddingTop: portrait ? height * 0.12 : 40 * u }}
       />

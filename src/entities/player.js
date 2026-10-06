@@ -7,6 +7,7 @@ import { input } from '../core/input.js';
 import { resolveCircle } from '../core/collision.js';
 import { carreraX, calleZ } from '../config.js';
 import { buildHumanoid, animateHumanoid } from './models.js';
+import { preloadCharacters, createCharacterMesh, updateCharacterAnim } from './characters.js';
 
 const WALK = 3.9, RUN = 7.7, JUMP_V = 7.4, GRAVITY = 23, ACCEL = 26, DECEL = 34;
 const REACH = 3.2;       // hull distance (m) at which F grabs a vehicle
@@ -49,6 +50,8 @@ export class Player {
     this._time = 0;
     this.position.set(SPAWN.x, 0, SPAWN.z);
     scene.add(this.mesh);
+    this._char = null;
+    preloadCharacters().then((ok) => { if (ok) this._attachChar(); }).catch(() => {});
 
     this.victims = [];
     for (let i = 0; i < 3; i++) {
@@ -59,6 +62,25 @@ export class Player {
       this.victims.push({ rig, t: 0, active: false, vx: 0, vz: 0, phase: 0 });
     }
     events.on('player:busted', () => { if (this.respawnT <= 0) this.respawnT = 2.4; this._respawnKind = 'busted'; });
+  }
+
+  // Swap the procedural humanoid for the rigged glTF character as soon as it has loaded (fallback stays if it fails).
+  _attachChar() {
+    try {
+      const c = createCharacterMesh('walker', { model: 'male-c', scale: 1.04 });
+      if (!c) return;
+      this.rig.body.visible = false;
+      this.mesh.add(c);
+      this._char = c;
+    } catch (err) { console.warn('[player] character attach failed', err); }
+  }
+
+  _animChar(dt) {
+    const c = this._char;
+    if (!c) return;
+    const down = this.mode === 'down';
+    const air = this.mode === 'foot' && (!this.onGround || this.stun > 0);
+    updateCharacterAnim(c, this.mode === 'entering' ? 4.2 : this.speed, dt, { down, air, vy: this.vy });
   }
 
   get health() { return state.health; }
@@ -90,6 +112,7 @@ export class Player {
         case 'down': this._down(dt, world); break;
         default: break;
       }
+      this._animChar(dt);
       this._updateVictims(dt, world);
     } catch (err) {
       if (!this._err) { this._err = true; console.error('[player.update]', err); }

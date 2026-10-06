@@ -9,6 +9,8 @@ import {
   clamp, rand, pick, wrapAngle, TAU, ensureIndex, inView, lineClear,
 } from './common.js';
 import { roadOfCarrera, roadOfCalle } from './roads.js';
+import { preloadCharacters, charactersReady, createCharacterMesh, updateCharacterAnim, disposeCharacter } from '../entities/characters.js';
+preloadCharacters().catch(() => {}); // optional glTF characters; the instanced procedural peds remain the fallback
 
 // ---------------------------------------------------------------- flavor data
 const FEMALE = ['Gloria', 'Marleny', 'Luz Dary', 'Yesenia', 'Rosalba', 'Carmenza', 'Nubia', 'Stella', 'Alejandra', 'Dayana', 'Valentina', 'Paola', 'Johana', 'Lucero', 'Esperanza', 'Ximena', 'Marisol', 'Tatiana'];
@@ -234,6 +236,7 @@ export function createPedestrians(scene, net, { count = 60 } = {}) {
     }
   }
 
+  let lastDt = 0.016;
   function createPed(kind, opts = {}) {
     if (!freeSlots.length) return null;
     const slot = freeSlots.pop();
@@ -278,6 +281,7 @@ export function createPedestrians(scene, net, { count = 60 } = {}) {
     if (w >= 0) world.peds.splice(w, 1);
     for (let k = 0; k < BOX; k++) zero(boxM, p.slot * BOX + k);
     zero(headM, p.slot); zero(coneM, p.slot);
+    if (p.char) { disposeCharacter(p.char); p.char = null; }
     scene.remove(p.mesh);
     freeSlots.push(p.slot);
   }
@@ -641,6 +645,33 @@ export function createPedestrians(scene, net, { count = 60 } = {}) {
       put(coneM, p.slot, 0, 2.3 * sc + dy, 0, 2.3 * sc, 1, 2.3 * sc, 0);
     } else { zero(boxM, base + 7); zero(coneM, p.slot); }
     p.mesh.rotation.y = p.heading;
+    drawChar(p, world);
+  }
+
+  // Optional rigged glTF character (near peds only). Replaces the instanced boxes while attached.
+  function drawChar(p, world) {
+    try {
+      const dx = p.position.x - plx, dz = p.position.z - plz, d2 = dx * dx + dz * dz;
+      if (d2 > 60 * 60 || !charactersReady()) {
+        if (p.char) { disposeCharacter(p.char); p.char = null; p.charFail = 0; }
+        return;
+      }
+      if (!p.char) {
+        if (p.charFail) return;
+        p.char = createCharacterMesh(p.kind, { scale: p.sc });
+        if (!p.char) { p.charFail = 1; return; }
+        p.mesh.add(p.char);
+      }
+      const base = p.slot * BOX;
+      for (let k = 0; k < BOX; k++) zero(boxM, base + k);
+      zero(headM, p.slot); zero(coneM, p.slot);
+      const lying = p.st === 'down' || p.st === 'getup';
+      const c = p.char;
+      c.rotation.set(lying ? p.pitch : 0, 0, lying ? p.roll : 0);
+      c.position.y = lying ? Math.max(0, p.hy - 0.22) * 0.5 : 0;
+      const sp = p.moving ? (p.running ? 5.4 : p.speed) : 0;
+      updateCharacterAnim(c, sp, lastDt, { lod: d2 > 30 * 30, air: lying && !p.landed });
+    } catch (err) { if (!p.charErr) { p.charErr = true; console.warn('[peds] char', err); } p.charFail = 1; }
   }
 
   // ---------------------------------------------------------------- public API
@@ -669,7 +700,7 @@ export function createPedestrians(scene, net, { count = 60 } = {}) {
   }
 
   function update(dt, world) {
-    time += dt;
+    time += dt; lastDt = dt;
     player = world.player;
     if (player && player.position) { plx = player.position.x; plz = player.position.z; }
     const idx = ensureIndex(world);

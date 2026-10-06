@@ -18,8 +18,7 @@ for (const v of views) {
   await page.goto('http://localhost:5173/?capture=1', { waitUntil: 'load' });
   await page.waitForFunction(() => window.__capture, null, { timeout: 120000 });
   const t0 = Date.now();
-  await page.evaluate((a) => window.__capture.scout(a.pos, a.look, a.fov || 60, a.hour ?? 12, !!a.rain, a.anchor || null, a.warm ?? 60), v);
-  const url = await page.evaluate(() => window.__capture.grab());
+  const url = await page.evaluate((a) => window.__capture.scout(a.pos, a.look, a.fov || 60, a.hour ?? 12, !!a.rain, a.anchor || null, a.warm ?? 60, { post: a.post || null, overcast: a.overcast ?? null, rainLevel: a.rainLevel ?? null }), v);
   fs.writeFileSync(path.join(outDir, `${v.name}.png`), Buffer.from(url.split(',')[1], 'base64'));
   console.log(v.name, `${Date.now() - t0} ms`);
   await page.close();

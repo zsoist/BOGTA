@@ -104,9 +104,9 @@ export const RainOverlay: React.FC<Props> = ({ intensity = 0.7, angle = 12, drop
                 width: r * 2,
                 height: r * 2.3,
                 borderRadius: '50% 50% 50% 50% / 58% 58% 42% 42%',
-                backdropFilter: 'blur(2.5px) brightness(1.18) saturate(1.2)',
+                backdropFilter: 'blur(2.5px) brightness(1.5) saturate(1.2)',
                 background: 'radial-gradient(circle at 32% 28%, rgba(255,255,255,0.55), rgba(255,255,255,0) 38%)',
-                boxShadow: 'inset -2px -4px 8px rgba(255,255,255,0.22), inset 3px 4px 9px rgba(0,0,0,0.55), 0 2px 5px rgba(0,0,0,0.25)',
+                boxShadow: 'inset -2px -4px 8px rgba(255,255,255,0.22), inset 3px 4px 9px rgba(0,0,0,0.3), 0 2px 5px rgba(0,0,0,0.2)',
               }}
             />
           </React.Fragment>

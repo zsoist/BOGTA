@@ -17,14 +17,15 @@ interface Props {
   sub?: string;
   /** locale thousands separators */
   locale?: string;
+  decimals?: number;
 }
 
 /** Number roll-up: fast start, long settle, pop + glow when it lands. */
-export const Counter: React.FC<Props> = ({ value, label, at, duration = 70, prefix = '', suffix = '', color = C.gold, size = 96, sub, locale = 'es-CO' }) => {
+export const Counter: React.FC<Props> = ({ value, label, at, duration = 70, prefix = '', suffix = '', color = C.gold, size = 96, sub, locale = 'es-CO', decimals = 0 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const p = ramp(frame, [at, at + duration], [0, 1], EZ.out);
-  const shown = Math.round(value * p);
+  const shown = decimals ? value * p : Math.round(value * p);
   const landT = frame - (at + duration * 0.85);
   const pop = landT >= 0 ? spring({ frame: landT, fps, config: SPR.pop }) : 0;
   const appear = ramp(frame, [at - 8, at + 4], [0, 1], EZ.out);
@@ -47,7 +48,7 @@ export const Counter: React.FC<Props> = ({ value, label, at, duration = 70, pref
         }}
       >
         {prefix}
-        {shown.toLocaleString(locale)}
+        {shown.toLocaleString(locale, { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}
         <span style={{ fontSize: size * 0.5, marginLeft: size * 0.08, color: C.white, opacity: 0.85 }}>{suffix}</span>
       </div>
       {sub && <div style={{ fontFamily: FONT.ui, fontSize: size * 0.17, color: C.mute, letterSpacing: 1 }}>{sub}</div>}

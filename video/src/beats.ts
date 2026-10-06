@@ -11,7 +11,8 @@ export const BEATS_PER_BAR = 4;
  * beat 40 (24.0 s) = montage start, the BREAK (energy falls) around beat 102 (61.2 s) = making-of, and the final
  * CLIMAX hit on beat 134 (80.4 s) = hero burst. All cuts therefore land on kicks.
  */
-export const MUSIC_TRIM_SEC = 1.11;
+/** 1.11 s analysed + 0.085 s measured decoder latency in Remotion's mp3 path (verified by rendering a WAV and re-measuring the kick). */
+export const MUSIC_TRIM_SEC = 1.195;
 export const MUSIC_DROP_BEAT = 40;
 export const MUSIC_BREAK_BEAT = 102;
 export const MUSIC_CLIMAX_BEAT = 134;

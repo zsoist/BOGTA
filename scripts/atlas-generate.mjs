@@ -51,9 +51,9 @@ const CLIPS = [
   { name: 'panel-03', src: 'video/public/art/panel-03.png', ratio: 'adaptive', out: AI, prompt: 'The warm grandmother smiles gently and offers the cup of hot chocolate toward the camera, steam rising from the cup, her braids and colorful poncho swaying slightly, soft lantern glow; slow push-in.' },
   { name: 'panel-05', src: 'video/public/art/panel-05.png', ratio: 'adaptive', out: AI, prompt: 'The colorful chiva party bus bounces to the beat, string party lights blinking and swaying, passengers on top dancing and cheering with raised arms, reflections dancing on the wet street; lively handheld camera.' },
   { name: 'panel-08', src: 'video/public/art/panel-08.png', ratio: 'adaptive', out: AI, prompt: 'The street vendor under the big rainbow umbrella smiles and hands over a snack, rain drips from the umbrella edge, lantern light flickering warmly, rain falling on cobblestones; slow gentle push-in.' },
-  { name: 'loading-1', src: 'assets/loading/loading-1.jpg', ratio: '16:9', out: GAME, loop: true, seconds: 4, prompt: 'Very subtle ambient motion: drifting clouds and mist, soft rain, twinkling city lights, slow gentle camera drift.' },
-  { name: 'loading-2', src: 'assets/loading/loading-2.jpg', ratio: '16:9', out: GAME, loop: true, seconds: 4, prompt: 'Very subtle ambient motion: drifting clouds and mist, soft rain, twinkling city lights, slow gentle camera drift.' },
-  { name: 'loading-3', src: 'assets/loading/loading-3.jpg', ratio: '16:9', out: GAME, loop: true, seconds: 4, prompt: 'Very subtle ambient motion: drifting clouds and mist, soft rain, twinkling city lights, slow gentle camera drift.' },
+  { name: 'loading-1', src: 'assets/loading/loading-1.jpg', ratio: '16:9', out: GAME, loop: true, seconds: 4, res: '480p', prompt: 'Very subtle ambient motion: drifting clouds and mist, soft rain, twinkling city lights, slow gentle camera drift.' },
+  { name: 'loading-2', src: 'assets/loading/loading-2.jpg', ratio: '16:9', out: GAME, loop: true, seconds: 4, res: '480p', prompt: 'Very subtle ambient motion: drifting clouds and mist, soft rain, twinkling city lights, slow gentle camera drift.' },
+  { name: 'loading-3', src: 'assets/loading/loading-3.jpg', ratio: '16:9', out: GAME, loop: true, seconds: 4, res: '480p', prompt: 'Very subtle ambient motion: drifting clouds and mist, soft rain, twinkling city lights, slow gentle camera drift.' },
 ];
 
 const abs = (p) => path.join(ROOT, p);
@@ -86,17 +86,23 @@ async function uploadMedia(file) {
   return url;
 }
 
-async function generate(clip) {
+async function generate(clip, manifest, save) {
+  manifest.pending ||= {};
+  let id = manifest.pending[clip.name];
+  if (id) console.log(`  resuming prediction ${id}`);
+  if (!id) {
   const imageUrl = await uploadMedia(clip.src);
   const body = {
     model: MODEL.id, image: imageUrl, prompt: clip.prompt + STYLE,
-    duration: clip.seconds || SECONDS, resolution: RES, ratio: clip.ratio, generate_audio: false, watermark: false,
+    duration: clip.seconds || SECONDS, resolution: clip.res || RES, ratio: clip.ratio, generate_audio: false, watermark: false,
     bitrate_mode: 'high',
   };
-  const r = await fetchR(`${API}/api/v1/model/generateVideo`, { method: 'POST', headers: { ...H(), 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const r = await fetchR(`${API}/api/v1/model/generateVideo`, { method: 'POST', headers: { ...H(), 'Content-Type': 'application/json' }, body: JSON.stringify(body) }, 1); // no retry on submit: avoid double billing
   const j = await r.json();
-  const id = j.data?.id || j.data?.prediction_id || j.prediction_id || j.id;
+  id = j.data?.id || j.data?.prediction_id || j.prediction_id || j.id;
   if (!id) throw new Error(`submit failed: ${r.status} ${JSON.stringify(j).slice(0, 400)}`);
+  manifest.pending[clip.name] = id; await save(); // journal: never lose a billed job
+  }
   for (let i = 0; i < 120; i++) {
     await sleep(5000);
     const p = await (await fetchR(`${API}/api/v1/model/prediction/${id}`, { headers: H() })).json();
@@ -166,7 +172,7 @@ async function main() {
   await mkdir(abs(AI), { recursive: true }); await mkdir(abs(RAW), { recursive: true }); await mkdir(abs(GAME), { recursive: true });
   const manifest = existsSync(manifestPath) ? JSON.parse(await readFile(manifestPath, 'utf8')) : { clips: [] };
   const save = () => writeFile(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
-  const spent = () => manifest.clips.reduce((s, c) => s + (c.cost || 0), 0);
+  const spent = () => [...manifest.clips, ...(manifest.lost || [])].reduce((s, c) => s + (c.cost || 0), 0);
   let bal = await balance();
   console.log(`balance $${bal.toFixed(3)} | ledger spend $${spent().toFixed(3)} | budget $${BUDGET} | model ${MODEL.id} ${RES} ${SECONDS}s`);
 
@@ -174,7 +180,7 @@ async function main() {
     if (ONLY && !ONLY.includes(clip.name)) continue;
     const rawPath = abs(path.join(RAW, `${clip.name}.mp4`));
     const secs = clip.seconds || SECONDS;
-    const est = MODEL.price * secs;
+    const est = MODEL.price * secs * ((clip.res || RES) === '480p' ? 0.45 : 1);
     const have = existsSync(rawPath) && !flag('force');
     if (!have) {
       if (spent() + est > BUDGET) { console.log(`SKIP ${clip.name}: budget (${spent().toFixed(3)} + ${est.toFixed(3)} > ${BUDGET})`); continue; }
@@ -183,15 +189,16 @@ async function main() {
       console.log(`GEN ${clip.name} ...`);
       const t0 = Date.now();
       try {
-        const { id, url } = await generate(clip);
+        const { id, url } = await generate(clip, manifest, save);
         const mp4 = Buffer.from(await (await fetchR(url)).arrayBuffer());
         await writeFile(rawPath, mp4);
         const nb = await balance();
         const delta = bal - nb; bal = nb;
-        const cost = delta > 0 && delta < est * 3 ? Number(delta.toFixed(4)) : est;
+        const cost = delta > 0 && delta < est * 1.6 ? Number(delta.toFixed(4)) : est;
         const info = probe(rawPath);
         manifest.clips = manifest.clips.filter((c) => c.name !== clip.name);
         manifest.clips.push({ name: clip.name, source: clip.src, model: MODEL.id, seconds: clip.seconds || SECONDS, cost, resolution: `${info.w}x${info.h}`, prediction: id, prompt: clip.prompt, generatedAt: new Date().toISOString() });
+        delete manifest.pending[clip.name];
         await save();
         console.log(`  done in ${((Date.now() - t0) / 1000) | 0}s, cost $${cost}, ${info.w}x${info.h}, balance $${nb.toFixed(3)}`);
       } catch (e) { console.error(`  FAIL ${clip.name}: ${e.message}`); continue; }

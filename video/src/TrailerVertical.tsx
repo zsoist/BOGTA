@@ -69,9 +69,9 @@ const VMakingOf: React.FC = () => {
       <AbsoluteFill style={{ background: 'radial-gradient(circle at 50% 35%, #16203A, #0B0B0F 70%)' }} />
       <KineticText
         words={[
-          { text: '1 LÍDER', at: b(0.1), color: C.opus, scale: 0.9 },
-          { text: '7 AGENTES', at: b(0.6), color: C.sonnet, scale: 0.9 },
-          { text: '90 MIN', at: b(1.1), color: C.gold, scale: 0.9 },
+          { text: `${STATS.agents} AGENTES`, at: b(0.1), color: C.sonnet, scale: 0.9 },
+          { text: `${STATS.minutes} MIN`, at: b(0.6), color: C.gold, scale: 0.9 },
+          { text: `${(STATS.tokens / 1e6).toFixed(1)} M TOKENS`, at: b(1.1), color: C.opus, scale: 0.8 },
         ]}
         size={230}
         stagger={0}
@@ -83,8 +83,8 @@ const VMakingOf: React.FC = () => {
       </div>
       <div style={{ position: 'absolute', left: 60, right: 60, bottom: height * 0.17, display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 24 }}>
         <Counter value={STATS.agents} label="Agentes" at={b(1.2)} duration={b(1.2)} color={C.sonnet} size={92} />
-        <Counter value={STATS.loc} label="Líneas" at={b(2)} duration={b(2.4)} color={C.green} size={92} />
-        <Counter value={STATS.codexImages + STATS.elevenTracks} label="Arte+audio IA" at={b(2.6)} duration={b(2.4)} color={C.eleven} size={92} />
+        <Counter value={STATS.linesOfCode} label="Líneas" at={b(2)} duration={b(2.4)} color={C.green} size={92} />
+        <Counter value={STATS.codexImages + STATS.elevenLabsTracks} label="Arte+audio IA" at={b(2.6)} duration={b(2.4)} color={C.eleven} size={92} />
       </div>
     </AbsoluteFill>
   );

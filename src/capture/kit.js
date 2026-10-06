@@ -7,8 +7,8 @@ import { env } from '../world/env.js';
 import { Vehicle } from '../entities/vehicle.js';
 import { driveToward, makeCtl, removeVehicle } from '../ai/common.js';
 
-export const FPS = 60;
-export const DT = 1 / FPS;
+export const cfg = { fps: 60, dt: 1 / 60 };
+export function setFps(fps) { cfg.fps = fps; cfg.dt = 1 / fps; }
 
 // ---------------------------------------------------------------- math
 export const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
@@ -50,10 +50,24 @@ export function lockClock(hour, raining) {
     Object.defineProperty(state, 'hour', { get: () => clockLock.hour, set: () => {}, configurable: true, enumerable: true });
     Object.defineProperty(state, 'raining', { get: () => clockLock.raining, set: () => {}, configurable: true, enumerable: true });
   }
-  env.rain = raining ? 1 : 0; // skip the 0 -> 1 smoothing
+  if (!envLock.rainPinned) env.rain = raining ? 1 : 0; // skip the 0 -> 1 smoothing
+  else envLock.rain = raining ? 1 : 0;
 }
 export function setHour(h) { clockLock.hour = h; }
 export function setRain(r) { clockLock.raining = !!r; }
+
+// env.rain (0..1 intensity) and env.overcast are recomputed every frame by world/env.js: pin them behind accessors so a shot can
+// grade the sky (e.g. clear golden hour at 17.8h, light drizzle) independently of the game's own clock rules.
+const envLock = { rain: null, overcast: null, rainV: 0, overV: 0.5 };
+function pinEnv(key) {
+  if (envLock[key + 'Pinned']) return;
+  envLock[key + 'Pinned'] = true;
+  Object.defineProperty(env, key, { get: () => (envLock[key] === null ? envLock[key + 'V'] : envLock[key]), set: (v) => { envLock[key + 'V'] = v; }, configurable: true, enumerable: true });
+}
+export function gradeEnv({ rain = null, overcast = null } = {}) {
+  pinEnv('rain'); pinEnv('overcast');
+  envLock.rain = rain; envLock.overcast = overcast;
+}
 
 // ---------------------------------------------------------------- synthetic input
 export const feed = { throttle: 0, steer: 0, handbrake: false, run: false, keys: new Set(), pressed: new Set() };

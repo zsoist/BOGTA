@@ -7,6 +7,7 @@ import { Flash } from '../components/Flash';
 import { HERO_BEATS_EACH, HERO_SLOTS } from '../shotlist';
 import { ramp, shake, useBeats } from '../lib/anim';
 import { C, EZ, FONT, SPR } from '../theme';
+import { STATS } from '../stats';
 
 /** Beat positions (scene-relative) — music climax hit sits on beat 2. */
 export const FINALE_CUES = { hold: 0, burst: 2, logo: 6, credits: 9, fade: 16.2 };
@@ -72,8 +73,8 @@ export const Finale: React.FC<{ vertical?: boolean }> = ({ vertical }) => {
           </AbsoluteFill>
           <AbsoluteFill style={{ background: 'radial-gradient(ellipse 70% 60% at 50% 45%, rgba(0,0,0,0.0), rgba(0,0,0,0.65))' }} />
           <RainOverlay intensity={0.45} drops={4} seed="fin1" opacity={0.8} />
-          <div style={{ position: 'absolute', left: 0, right: 0, top: vertical ? '-6%' : '-9%', bottom: 0 }}>
-            <GameLogo at={logoF} width={vertical ? 1000 : 1000} />
+          <div style={{ position: 'absolute', left: 0, right: 0, top: vertical ? '-6%' : '-24%', bottom: 0 }}>
+            <GameLogo at={logoF} width={vertical ? 900 : 700} />
           </div>
         </AbsoluteFill>
       )}
@@ -81,7 +82,7 @@ export const Finale: React.FC<{ vertical?: boolean }> = ({ vertical }) => {
 
       {/* credits */}
       {frame >= credF && (
-        <AbsoluteFill style={{ justifyContent: 'flex-end', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingBottom: (vertical ? 240 : 64) * u }}>
+        <AbsoluteFill style={{ justifyContent: 'flex-end', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingBottom: (vertical ? 200 : 40) * u }}>
           <Credits at={credF} vertical={vertical} />
         </AbsoluteFill>
       )}
@@ -95,22 +96,27 @@ export const Finale: React.FC<{ vertical?: boolean }> = ({ vertical }) => {
 const Credits: React.FC<{ at: number; vertical?: boolean }> = ({ at, vertical }) => {
   const frame = useCurrentFrame();
   const { width, height, fps } = useVideoConfig();
-  const u = Math.min(width / 1920, height / 1080);
+  const u = Math.min(width / 1920, height / 1080) * (vertical ? 1.4 : 1);
   const bf = (fps * 60) / 100;
   const a1 = ramp(frame, [at, at + 14], [0, 1], EZ.out);
   const a2 = ramp(frame, [at + bf * 0.8, at + bf * 0.8 + 14], [0, 1], EZ.out);
+  const a3 = ramp(frame, [at + bf * 1.6, at + bf * 1.6 + 14], [0, 1], EZ.out);
   return (
     <div style={{ textAlign: 'center' }}>
-      <div style={{ fontFamily: FONT.title, fontSize: (vertical ? 92 : 78) * u * (vertical ? 1.2 : 1), letterSpacing: 6 * u, color: '#fff', textShadow: `0 ${4 * u}px ${24 * u}px #000`, opacity: a1, transform: `translateY(${(1 - a1) * 24}px)` }}>
-        HECHO EN EL CLAUDE BUILD DAY BOGOTÁ
+      <div style={{ fontFamily: FONT.title, fontSize: 70 * u, letterSpacing: 5 * u, color: '#fff', textShadow: `0 ${4 * u}px ${24 * u}px #000`, opacity: a1, transform: `translateY(${(1 - a1) * 24}px)` }}>
+        CONSTRUIDO EN {STATS.minutes} MINUTOS CON CLAUDE CODE
       </div>
-      <div style={{ fontFamily: FONT.ui, fontWeight: 600, fontSize: (vertical ? 28 : 28) * u * (vertical ? 1.4 : 1), letterSpacing: 10 * u, color: C.gold, marginTop: 8 * u, opacity: a2, textShadow: '0 2px 12px #000' }}>
-        UNIVERSIDAD SANTO TOMÁS · 05.10.2026
+      <div style={{ fontFamily: FONT.ui, fontWeight: 600, fontSize: 26 * u, letterSpacing: 8 * u, color: C.gold, marginTop: 6 * u, opacity: a2, textShadow: '0 2px 12px #000' }}>
+        BUILD DAY BOGOTÁ · UNIVERSIDAD SANTO TOMÁS · 05.10.2026
       </div>
-      <div style={{ display: 'flex', gap: 26 * u, justifyContent: 'center', marginTop: 28 * u, flexWrap: 'wrap' }}>
-        <Badge text="CLAUDE" sub="OPUS 5.5 + 7× SONNET 5.5" color={C.opus} at={at + bf * 1.2} />
-        <Badge text="CODEX" sub="ARTE · GPT-IMAGE" color={C.codex} at={at + bf * 1.7} />
-        <Badge text="ELEVENLABS" sub="MÚSICA · VOZ · SFX" color={C.eleven} at={at + bf * 2.2} />
+      <div style={{ display: 'inline-block', marginTop: 22 * u, padding: `${10 * u}px ${44 * u}px`, borderRadius: 18 * u, background: 'rgba(8,8,12,0.85)', border: `${4 * u}px solid ${C.green}`, boxShadow: `0 0 ${40 * u}px ${C.green}55`, opacity: a3, transform: `scale(${0.9 + 0.1 * a3})` }}>
+        <div style={{ fontFamily: FONT.ui, fontWeight: 800, fontSize: 92 * u, color: C.green, letterSpacing: -1, lineHeight: 1.1 }}>{STATS.liveUrl}</div>
+      </div>
+      <div style={{ fontFamily: FONT.mono, fontSize: 28 * u, color: '#B8BACB', marginTop: 12 * u, opacity: a3 }}>{STATS.repo}</div>
+      <div style={{ display: 'flex', gap: 18 * u, justifyContent: 'center', marginTop: 18 * u, flexWrap: 'wrap', transform: `scale(${vertical ? 0.9 : 0.7})` }}>
+        <Badge text="CLAUDE" sub="OPUS 5.5 + SONNET 5.5" color={C.opus} at={at + bf * 2.2} />
+        <Badge text="CODEX" sub="ARTE · OPENAI" color={C.codex} at={at + bf * 2.6} />
+        <Badge text="ELEVENLABS" sub="MÚSICA · VOZ" color={C.eleven} at={at + bf * 3} />
       </div>
     </div>
   );
