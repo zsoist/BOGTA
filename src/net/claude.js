@@ -1,7 +1,11 @@
 // Browser client for the Claude-powered API. Never throws: falls back to offline lines so the game stays fun without a key.
+import { offlineNpcReply as engineReply, npcGreeting, quickReplies, beginConversation, usedIntents, nearestPlaceName, observeTurn } from './offline.js';
+export { npcGreeting, quickReplies, beginConversation, usedIntents };
 const TIMEOUT_MS = 20000;
 
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+/** Offline NPC reply that answers what the player said. @returns {{reply:string, intent:string, action?:object}} */
+export function offlineNpcReply(ped = {}, context = {}, message = '') { return engineReply(ped, context, message); }
 const lastPicked = new Map();
 function pickFresh(key, arr) {
   let line = pick(arr);
@@ -80,18 +84,29 @@ export async function checkAI() {
   }
 }
 
-/** @returns {Promise<{reply: string, offline?: boolean}>} */
+// The server only keeps a few context fields: fold the nearest landmark into `district` so Claude can give real directions.
+function serverContext(c = {}) {
+  const near = nearestPlaceName(c);
+  return { district: near && c.district ? `${c.district} (cerca de ${near})` : c.district, hour: c.hour, raining: c.raining, wanted: c.wanted, money: c.money, vehicle: c.vehicle };
+}
+
+/** @returns {Promise<{reply: string, offline?: boolean, intent?: string, action?: object}>} */
 export async function npcTalk({ ped = {}, history = [], message = '', context = {} } = {}) {
   try {
     const { data } = await post('/api/npc', {
       ped: { name: ped.name, kind: ped.kind, persona: ped.persona },
       history: history.slice(-12),
       message: String(message).slice(0, 400),
-      context,
+      context: serverContext(context),
     });
-    if (data && typeof data.reply === 'string' && data.reply.trim() && !data.offline) return { reply: data.reply.trim() };
+    if (data && typeof data.reply === 'string' && data.reply.trim() && !data.offline) {
+      let action = null;
+      try { action = observeTurn(ped, context, message); } catch { /* optional */ }
+      return { reply: data.reply.trim(), action };
+    }
   } catch { /* timeout / network → fallback */ }
-  return { reply: offlineNpcReply(ped, context), offline: true };
+  const o = engineReply(ped, context, message);
+  return { reply: o.reply, offline: true, intent: o.intent, action: o.action };
 }
 
 /** @returns {Promise<{line: string, offline?: boolean}>} */

@@ -1,11 +1,11 @@
 // NPC chat panel: portrait, typewriter replies, quick-reply chips, Claude/offline badge, optional voice.
 import { events } from '../core/events.js';
-import { state } from '../core/state.js';
+import { state, addMoney, formatCOP } from '../core/state.js';
 import { input } from '../core/input.js';
 import { districtAt } from '../config.js';
 import { injectStyles, h, kindInfo } from './util.js';
 
-const CHIPS = ['¿Qué más, veci?', '¿Cuánto vale?', '¿Dónde queda Monserrate?'];
+const FALLBACK_CHIPS = ['¿Qué más, veci?', '¿Cuánto vale?', '¿Dónde queda Monserrate?'];
 const GREETINGS = {
   vendor: ['¡A la orden, a la orden! ¿Qué se le ofrece, veci?', '¿Le provoca algo, sumercé? ¡Todo fresquecito!'],
   walker: ['¿Qué más, parce? ¿Todo bien por ahí?', 'Ey, qué hubo. Ando con afán, pero dígame.'],
@@ -81,12 +81,22 @@ export function createDialog(root) {
   root.append(layer);
   log.append(typing);
 
-  const chipBtns = CHIPS.map((c) => {
-    const b = h('button', { class: 'dlg-chip', type: 'button', text: c });
-    b.addEventListener('click', () => send(c));
-    chipsEl.append(b);
-    return b;
-  });
+  let chipBtns = [];
+  function renderChips() {
+    chipsEl.textContent = '';
+    let list = FALLBACK_CHIPS;
+    try {
+      const q = netMod?.quickReplies?.(ped, context(), netMod.usedIntents?.(ped) || []);
+      if (q?.length) list = q.map((c) => c.text);
+    } catch { /* fallback chips */ }
+    chipBtns = list.map((c) => {
+      const b = h('button', { class: 'dlg-chip', type: 'button', text: c });
+      b.disabled = pending;
+      b.addEventListener('click', () => send(c));
+      chipsEl.append(b);
+      return b;
+    });
+  }
 
   // ---------- state ----------
   let ped = null, isOpen = false, pending = false, token = 0, ttsOn = true;
@@ -131,7 +141,7 @@ export function createDialog(root) {
       el.addEventListener('click', finish, { once: true });
       const tick = (now) => {
         if (!isOpen) { finish(); return; }
-        acc += (now - last) / 1000 * 46; last = now; // ~46 chars/s
+        acc += (now - last) / 1000 * 40; last = now; // ~40 chars/s (click the bubble to skip)
         while (acc >= 1 && i < text.length) {
           const ch = text[i++]; acc -= 1;
           if (/[.!?¿¡]/.test(ch) && i < text.length && text[i] === ' ') acc -= 6; // little pause on sentence ends
@@ -149,6 +159,8 @@ export function createDialog(root) {
     pending = v;
     typing.classList.toggle('show', v);
     sendBtn.disabled = v;
+    inputEl.disabled = v;
+    if (!v && isOpen) setTimeout(() => inputEl.focus({ preventScroll: true }), 0);
     chipBtns.forEach((b) => { b.disabled = v; });
     form.setAttribute('aria-busy', String(v));
     if (v) scrollDown();
@@ -165,6 +177,9 @@ export function createDialog(root) {
       raining: !!state.raining,
       wanted: state.wanted || 0,
       money: state.money,
+      day: state.day,
+      plateDigit: state.plateDigit,
+      pos: p?.position ? { x: Math.round(p.position.x), z: Math.round(p.position.z) } : undefined,
       vehicle: p?.vehicle ? (p.vehicle.def?.label || p.vehicle.type || 'vehículo') : null,
     };
   }
@@ -178,7 +193,7 @@ export function createDialog(root) {
     const prior = history.slice();
     history.push({ role: 'user', content: text });
     setPending(true);
-    let reply = '', offline = false;
+    let reply = '', offline = false, action = null;
     try {
       const net = await getNet();
       if (typeof net.npcTalk === 'function') {
@@ -188,6 +203,7 @@ export function createDialog(root) {
         ]);
         reply = (r?.reply || '').trim();
         offline = !!r?.offline;
+        action = r?.action || null;
       }
     } catch (err) { console.warn('[dialog] npcTalk failed', err); }
     if (my !== token) return; // closed / reopened meanwhile
@@ -196,10 +212,16 @@ export function createDialog(root) {
     syncAI();
     setPending(false);
     history.push({ role: 'assistant', content: reply });
+    if (action?.type === 'buy' && action.price > 0 && state.money >= action.price) {
+      addMoney(-action.price, action.item);
+      const icon = action.item === 'tinto' ? '☕' : '🛒';
+      events.emit('notify', { text: `${icon} ${action.qty > 1 ? action.qty + ' ' : ''}${action.label}${action.qty > 1 ? 's' : ''}: −${formatCOP(action.price)}`, kind: 'good' });
+    }
+    renderChips();
     const m = addMsg('npc', '');
+    if (ttsOn) speakLine(reply, ped?.kind); // speak the reply text only, right as it starts typing
     await typewrite(m, reply);
     if (my !== token) return;
-    if (ttsOn) speakLine(reply, ped?.kind);
     inputEl.focus();
   }
 
@@ -210,6 +232,7 @@ export function createDialog(root) {
     if (!p) return;
     if (isOpen) { if (p === ped) { inputEl.focus(); return; } closeInternal(false); }
     ped = p; token++; history = [];
+    try { netMod?.beginConversation?.(p); } catch { /* optional */ }
     const info = kindInfo(p.kind);
     panel.style.setProperty('--kc', info.color);
     nameEl.textContent = p.name || info.label;
@@ -230,11 +253,18 @@ export function createDialog(root) {
     panel.classList.add('open');
     inputEl.placeholder = `Escríbele algo a ${(p.name || info.label).split(' ')[0]}…`;
     setTimeout(() => inputEl.focus({ preventScroll: true }), 60);
-    // local greeting, instant (no API round-trip)
-    const greet = p.greeting || pick(GREETINGS[p.kind] || GREETINGS.walker);
-    const m = addMsg('npc', '');
+    // local, context-aware greeting from the intent engine (instant, no API round-trip)
     const my = token;
-    typewrite(m, greet).then(() => { if (my === token && ttsOn) speakLine(greet, p.kind); });
+    getNet().then(() => {
+      if (my !== token || !isOpen) return;
+      let greet = p.greeting;
+      try { greet ||= netMod?.npcGreeting?.(p, context()); } catch { /* fallback below */ }
+      greet ||= pick(GREETINGS[p.kind] || GREETINGS.walker);
+      renderChips();
+      const m = addMsg('npc', '');
+      if (ttsOn) speakLine(greet, p.kind);
+      typewrite(m, greet);
+    });
   }
 
   function closeInternal(restore = true) {
@@ -260,7 +290,7 @@ export function createDialog(root) {
     if (!isOpen) return;
     if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); return; }
     if (e.key === 'Tab') { // focus trap
-      const f = [...panel.querySelectorAll('button:not(:disabled), input')];
+      const f = [...panel.querySelectorAll('button:not(:disabled), input:not(:disabled)')];
       if (!f.length) return;
       const i = f.indexOf(document.activeElement);
       const next = e.shiftKey ? (i <= 0 ? f.length - 1 : i - 1) : (i === f.length - 1 ? 0 : i + 1);

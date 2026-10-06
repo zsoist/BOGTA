@@ -1,0 +1,38 @@
+{
+  "generated": "2026-10-06T00:54:36.219Z",
+  "fps": 60,
+  "width": 1920,
+  "height": 1080,
+  "shots": [
+    {
+      "name": "candelaria-crane",
+      "file": "candelaria-crane.mp4",
+      "frames": 270,
+      "seconds": 4.5,
+      "fps": 60,
+      "hud": false,
+      "description": "Crane down from 26 m to street level over the colonial roofs of La Candelaria, looking at Plaza de Bolivar, rain at dusk (no HUD).",
+      "beatFrame": null
+    },
+    {
+      "name": "colpatria-night-orbit",
+      "file": "colpatria-night-orbit.mp4",
+      "frames": 270,
+      "seconds": 4.5,
+      "fps": 60,
+      "hud": false,
+      "description": "70-degree orbit around Torre Colpatranca, LED facade cycling, light drizzle, night (no HUD).",
+      "beatFrame": null
+    },
+    {
+      "name": "monserrate-dolly",
+      "file": "monserrate-dolly.mp4",
+      "frames": 270,
+      "seconds": 4.5,
+      "fps": 60,
+      "hud": false,
+      "description": "Golden-hour rising dolly from over La Candelaria rooftops toward the Monserrate sanctuary on the Cerros (DoF, no HUD).",
+      "beatFrame": null
+    }
+  ]
+}
