@@ -139,7 +139,7 @@ function updateClock(dt) {
   if (state.hour >= 24) { state.hour -= 24; state.day += 1; events.emit('notify', { text: `Día ${state.day} — ${state.day % 2 ? 'impar' : 'par'}: ojo con el pico y placa`, kind: 'info' }); }
   const wasRaining = state.raining;
   state.raining = state.hour >= 15 && state.hour < 17.5; // "llueve a las 3"
-  if (state.raining && !wasRaining) events.emit('notify', { text: '🌧️ Son las 3... y como siempre, llovió en Bogotá', kind: 'info' });
+  if (state.raining && !wasRaining) events.emit('notify', { text: '☔ ¡Se vino el palo de agua! Saque la sombrilla, sumercé', kind: 'info' });
   if (player) {
     const d = districtAt(player.position.z);
     if (d !== lastDistrict) { lastDistrict = d; events.emit('district:change', { name: d }); }

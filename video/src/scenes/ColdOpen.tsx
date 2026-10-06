@@ -13,14 +13,14 @@ export interface ColdOpenCues {
   clockIn: number;
   /** 14:59 -> 15:00 */
   clockFlip: number;
-  /** "SIEMPRE LLUEVE A LAS 3" word slams (beats) */
+  /** "BIENVENIDO A LA NEVERA" word slams (beats) */
   slam: [number, number, number, number];
   total: number;
 }
 export const COLD_MASTER: ColdOpenCues = { lightning: [3, 4.25, 7], clockIn: 3.5, clockFlip: 6, slam: [8, 8.5, 9, 10], total: 12 };
 export const COLD_VERTICAL: ColdOpenCues = { lightning: [1.5, 2.5, 4], clockIn: 2, clockFlip: 4, slam: [5, 5.5, 6, 6.5], total: 8 };
 
-/** Act 1 — black, rain on the lens, lightning reveals the cerros, 14:59 -> 15:00, "SIEMPRE LLUEVE A LAS 3". */
+/** Act 1 — black, rain on the lens, lightning reveals the cerros, 14:59 -> 15:00, "BIENVENIDO A LA NEVERA". */
 export const ColdOpen: React.FC<{ cues?: ColdOpenCues }> = ({ cues = COLD_MASTER }) => {
   const { frame, fps, width, height, b, bf, pulse } = useBeats();
   const portrait = height > width;
@@ -82,20 +82,20 @@ export const ColdOpen: React.FC<{ cues?: ColdOpenCues }> = ({ cues = COLD_MASTER
           <span style={{ opacity: colonOn ? 1 : 0.15 }}>:</span>
           {clockText.slice(3)}
         </div>
-        <div style={{ fontFamily: FONT.title, fontSize: 38 * u * (1 - toCorner * 0.3), letterSpacing: 12 * u, color: afterFlip ? C.gold : C.white, opacity: 0.9 * (1 - toCorner), marginTop: 6 * u }}>{afterFlip ? '¡EMPEZÓ EL AGUACERO!' : 'TARDE · CIELO DESPEJADO'}</div>
+        <div style={{ fontFamily: FONT.title, fontSize: 38 * u * (1 - toCorner * 0.3), letterSpacing: 12 * u, color: afterFlip ? C.gold : C.white, opacity: 0.9 * (1 - toCorner), marginTop: 6 * u }}>{afterFlip ? '¡Y SE VINO EL PALO DE AGUA!' : 'TARDE · SOLECITO TRAICIONERO'}</div>
       </div>
 
-      {/* SIEMPRE LLUEVE A LAS 3 */}
+      {/* BIENVENIDO A LA NEVERA */}
       <KineticText
         start={0}
         size={portrait ? 210 : 205}
         stagger={0}
         shakeAmp={26}
         words={[
-          { text: 'SIEMPRE', at: b(cues.slam[0]), color: '#fff' },
-          { text: 'LLUEVE', at: b(cues.slam[1]), color: '#fff' },
-          { text: 'A LAS', at: b(cues.slam[2]), color: '#fff', scale: 0.85 },
-          { text: '3', at: b(cues.slam[3]), color: C.gold, scale: 2.2, rot: -4 },
+          { text: 'BIENVENIDO', at: b(cues.slam[0]), color: '#fff' },
+          { text: 'A LA', at: b(cues.slam[1]), color: '#fff', scale: 0.85 },
+          { text: 'NEVERA,', at: b(cues.slam[2]), color: '#fff' },
+          { text: 'PARCE', at: b(cues.slam[3]), color: C.gold, scale: 1.6, rot: -4 },
         ]}
         style={{ paddingTop: portrait ? height * 0.12 : 40 * u }}
       />

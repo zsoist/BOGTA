@@ -77,7 +77,13 @@
       "resolution": "1280x720",
       "prediction": "70af23c3440544e4b0b010a8dcc672cd",
       "prompt": "Little robots busily building a city on a laptop, bright welding sparks flying, glowing lights flickering, slow cinematic orbit camera around the scene.",
-      "generatedAt": "2026-10-06T00:28:45.260Z"
+      "generatedAt": "2026-10-06T00:28:45.260Z",
+      "files": {
+        "trailer": "video/public/ai/makingof.mp4",
+        "web": "video/public/ai/web/makingof.mp4"
+      },
+      "fps": 60,
+      "interp": "mci"
     },
     {
       "name": "title-loop",
@@ -121,7 +127,30 @@
       "resolution": "1280x720",
       "prediction": "75b68a7e31fb4b18a7ff457754b851bf",
       "prompt": "Slow aerial drift over the night panorama of Bogotá, thousands of city lights twinkling, clouds slowly moving over the mountains, gentle parallax; the upper center of the frame stays calm and empty.",
-      "generatedAt": "2026-10-06T00:49:02.657Z"
+      "generatedAt": "2026-10-06T00:49:02.657Z",
+      "files": {
+        "trailer": "video/public/ai/endcard.mp4",
+        "web": "video/public/ai/web/endcard.mp4"
+      },
+      "fps": 60,
+      "interp": "mci"
+    },
+    {
+      "name": "panel-02",
+      "source": "video/public/art/panel-02.png",
+      "model": "bytedance/seedance-2.0-fast/image-to-video",
+      "seconds": 5,
+      "cost": 0.2946,
+      "resolution": "834x1112",
+      "prediction": "6e2eaf2e50ea431298edc516a778bf67",
+      "prompt": "The red TransMilenio articulated bus glides forward arriving at the station, headlights glowing, rain falling, passengers with umbrellas waiting under the glass shelter, reflections shimmering on the wet road; slow camera dolly.",
+      "generatedAt": "2026-10-06T01:13:20.111Z",
+      "files": {
+        "trailer": "video/public/ai/panel-02.mp4",
+        "web": "video/public/ai/web/panel-02.mp4"
+      },
+      "fps": 60,
+      "interp": "mci"
     }
   ],
   "lost": [
@@ -141,5 +170,7 @@
       "note": "generated+billed but poll/download hit a transient 'fetch failed' before the result URL was saved (no retry in first script version); output unrecoverable, no prediction id recorded"
     }
   ],
-  "pending": {}
+  "pending": {
+    "panel-03": "2893d69035e04c5187bdbbb58d9f1044"
+  }
 }

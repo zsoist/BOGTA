@@ -54,7 +54,7 @@ export const TitleSlam: React.FC<{ vertical?: boolean }> = ({ vertical }) => {
       <GameLogo at={dropF} width={vertical ? 1000 : 1060} />
       <div style={{ position: 'absolute', left: 0, right: 0, top: `${vertical ? 62 : 74}%`, textAlign: 'center', opacity: taglineA, transform: `translateY(${(1 - taglineA) * 20}px)` }}>
         <span style={{ fontFamily: FONT.title, fontSize: (vertical ? 70 : 62) * u * (vertical ? 1.6 : 1), letterSpacing: 14 * u, color: '#fff', textShadow: `0 ${4 * u}px ${24 * u}px #000` }}>
-          LA CIUDAD DONDE SIEMPRE LLUEVE A LAS <span style={{ color: C.gold }}>3</span>
+          DONDE EL TRANCÓN ES DEPORTE Y EL TINTO, <span style={{ color: C.gold }}>RELIGIÓN</span>
         </span>
       </div>
       <LensFlare at={dropF + 2} duration={b(1.4)} y={vertical ? 0.42 : 0.46} />
