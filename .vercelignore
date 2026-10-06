@@ -1,0 +1,7 @@
+video
+tests
+assets/_src
+docs/media
+.claude
+*.md
+!README.md

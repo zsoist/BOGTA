@@ -1,0 +1,111 @@
+{
+  "generatedAt": "2026-10-05T23:43:53.300Z",
+  "note": "seconds estimated from 128 kbps CBR mp3 size",
+  "files": {
+    "assets/music/busted.mp3": {
+      "bytes": 80711,
+      "seconds": 5,
+      "credits": 0
+    },
+    "assets/music/wasted.mp3": {
+      "bytes": 80711,
+      "seconds": 5,
+      "credits": 0
+    },
+    "assets/music/title.mp3": {
+      "bytes": 720606,
+      "seconds": 45,
+      "credits": 0
+    },
+    "assets/music/tropicombo.mp3": {
+      "bytes": 1200841,
+      "seconds": 75.1,
+      "credits": 1788
+    },
+    "assets/music/acordeon.mp3": {
+      "bytes": 1200841,
+      "seconds": 75.1,
+      "credits": 0
+    },
+    "assets/music/perreadera.mp3": {
+      "bytes": 1200841,
+      "seconds": 75.1,
+      "credits": 2062
+    },
+    "assets/music/champeta.mp3": {
+      "bytes": 1200841,
+      "seconds": 75.1,
+      "credits": 0
+    },
+    "assets/sfx/horn.mp3": {
+      "bytes": 20106,
+      "seconds": null,
+      "credits": null
+    },
+    "assets/sfx/siren.mp3": {
+      "bytes": 65245,
+      "seconds": null,
+      "credits": null
+    },
+    "assets/sfx/crash.mp3": {
+      "bytes": 33062,
+      "seconds": null,
+      "credits": null
+    },
+    "assets/sfx/cash.mp3": {
+      "bytes": 24703,
+      "seconds": null,
+      "credits": null
+    },
+    "assets/sfx/rain.mp3": {
+      "bytes": 160958,
+      "seconds": null,
+      "credits": null
+    },
+    "assets/sfx/crowd.mp3": {
+      "bytes": 160958,
+      "seconds": null,
+      "credits": null
+    },
+    "assets/sfx/whoosh.mp3": {
+      "bytes": 13836,
+      "seconds": null,
+      "credits": null
+    },
+    "assets/voices/jingle-tropicombo.mp3": {
+      "bytes": 42675,
+      "seconds": 2.7,
+      "credits": 0
+    },
+    "assets/voices/jingle-acordeon.mp3": {
+      "bytes": 79038,
+      "seconds": 4.9,
+      "credits": 0
+    },
+    "assets/voices/jingle-perreadera.mp3": {
+      "bytes": 38078,
+      "seconds": 2.4,
+      "credits": 0
+    },
+    "assets/voices/jingle-champeta.mp3": {
+      "bytes": 45601,
+      "seconds": 2.9,
+      "credits": 0
+    },
+    "assets/voices/jingle-trancon.mp3": {
+      "bytes": 49363,
+      "seconds": 3.1,
+      "credits": 0
+    },
+    "assets/voices/welcome.mp3": {
+      "bytes": 27211,
+      "seconds": 1.7,
+      "credits": 0
+    },
+    "assets/music/trailer.mp3": {
+      "bytes": 1440750,
+      "seconds": 90,
+      "credits": 0
+    }
+  }
+}

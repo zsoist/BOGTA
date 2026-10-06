@@ -1,0 +1,72 @@
+{
+  "clips": [
+    {
+      "name": "coldopen",
+      "source": "video/public/art/coldopen.png",
+      "model": "bytedance/seedance-2.0-fast/image-to-video",
+      "seconds": 5,
+      "cost": 0.2927,
+      "resolution": "1280x720",
+      "prediction": "a85e4c3e4f634fe282219d0f5260f281",
+      "prompt": "Rain streaks run down a window glass in the foreground, a sudden lightning flash illuminates the Bogotá skyline and the Andes mountains behind, then dims back to moody night; neon reflections shimmer in the drops. Slow cinematic push-in.",
+      "generatedAt": "2026-10-05T23:57:48.226Z",
+      "files": {
+        "trailer": "video/public/ai/coldopen.mp4",
+        "web": "video/public/ai/web/coldopen.mp4"
+      },
+      "fps": 60,
+      "interp": "dup"
+    },
+    {
+      "name": "panel-01",
+      "source": "video/public/art/panel-01.png",
+      "model": "bytedance/seedance-2.0-fast/image-to-video",
+      "seconds": 5,
+      "cost": 0.5873,
+      "resolution": "834x1112",
+      "prediction": "5f3be7c5c262455b8cf98fddea6614af",
+      "prompt": "The yellow taxi drifts sideways through the wet street, sheets of rain spray flying off its tires, headlights glowing, reflections streaking on the asphalt; the camera tracks slightly alongside with dynamic energy.",
+      "generatedAt": "2026-10-06T00:03:51.961Z",
+      "files": {
+        "trailer": "video/public/ai/panel-01.mp4",
+        "web": "video/public/ai/web/panel-01.mp4"
+      },
+      "fps": 60,
+      "interp": "mci"
+    },
+    {
+      "name": "panel-04",
+      "source": "video/public/art/panel-04.png",
+      "model": "bytedance/seedance-2.0-fast/image-to-video",
+      "seconds": 5,
+      "cost": 0.2946,
+      "resolution": "834x1112",
+      "prediction": "5ee5f279235944d7b23363936e6b7fe7",
+      "prompt": "Police lights flash blue and red in a chase at night, the green police car speeds forward through rain spray, light reflections pulsing on the wet road, city lights twinkling behind; subtle camera shake.",
+      "generatedAt": "2026-10-06T00:08:19.568Z",
+      "files": {
+        "trailer": "video/public/ai/panel-04.mp4",
+        "web": "video/public/ai/web/panel-04.mp4"
+      },
+      "fps": 60,
+      "interp": "mci"
+    },
+    {
+      "name": "panel-07",
+      "source": "video/public/art/panel-07.png",
+      "model": "bytedance/seedance-2.0-fast/image-to-video",
+      "seconds": 5,
+      "cost": 0.5891,
+      "resolution": "834x1112",
+      "prediction": "e04b358fe2c647c1a88bbc406e0b04fb",
+      "prompt": "The tall skyscraper tower LED facade cycles through rainbow colors, glowing reflections shifting on the wet plaza pavement, light rain falling, slow upward camera tilt, street lamps glowing.",
+      "generatedAt": "2026-10-06T00:19:43.364Z",
+      "files": {
+        "trailer": "video/public/ai/panel-07.mp4",
+        "web": "video/public/ai/web/panel-07.mp4"
+      },
+      "fps": 60,
+      "interp": "mci"
+    }
+  ]
+}

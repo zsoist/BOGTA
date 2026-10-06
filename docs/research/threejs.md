@@ -1,0 +1,13 @@
+# Three.js tech brief (verified 2026-10-05)
+- three@0.186.1 via import map (jsdelivr). `three/addons/` → examples/jsm.
+- r186 pitfalls: THREE.Clock deprecated → use `new THREE.Timer()`; `timer.update(); dt = timer.getDelta()`. PCFSoftShadowMap removed → use PCFShadowMap. Use WebGLRenderer.
+- NO physics lib: custom arcade physics (velocity split forward/lateral; lateral grip per second; handbrake lowers grip = drift; speed-scaled steering; smoothed steer input).
+- Buildings: ONE InstancedMesh(BoxGeometry(1,1,1)) + setColorAt; window CanvasTexture; merge static road geometry with BufferGeometryUtils.mergeGeometries.
+- Fog(sky, 80, 320), camera far ~400, pixelRatio min(dpr,1.5). Shadows only from sun, 1024 map, shadow camera ±60 following player.
+- Collisions: AABB spatial hash; push out along min-penetration axis; on wall hit kill normal velocity (vel -= n*dot*1.3) + damage.
+- Traffic: road-graph nodes at intersections; car seeks lane point (right-hand traffic, lane offset to the right); random next node excluding U-turn; forward sensor to slow/stop.
+- Wanted: crimes add heat; police count = stars*2 spawned ~120 m away at road nodes; pursue predicted pos (pos + vel*0.8); decay after ~20 s unseen; busted if stopped near police.
+- Chase cam: desired = pos - fwd*8 + up*4; lerp with 1-exp(-5dt); FOV 60→75 with speed.
+- Minimap: pre-render roads to offscreen canvas; translate/rotate(-heading) per frame.
+- Engine audio: saw+square osc → lowpass → gain; rpm by speed within gear span; siren = osc + 2 Hz LFO; screech = band-passed noise. AudioContext unlocked on first key.
+- References: github.com/depixeled-chris/gta7 (closest), swift502/Sketchbook (enter/exit state machine), Block City Racer write-up (instancing).

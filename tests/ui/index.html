@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="es-CO">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>UI harness — GTA Bogotá</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;800&family=Bangers&display=swap" rel="stylesheet" />
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0b0f; color: #fff; font-family: Inter, system-ui, sans-serif; }
+  #game { position: fixed; inset: 0; width: 100%; height: 100%; display: block; background: linear-gradient(180deg, #8fb4d8 0%, #c9d8e6 45%, #4a5a4a 45%, #2d3a2d 100%); }
+  #ui { position: fixed; inset: 0; pointer-events: none; }
+  #ui > * { pointer-events: auto; }
+  #panel { position: fixed; left: 50%; top: 8px; transform: translateX(-50%); z-index: 200; display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; max-width: 70vw; opacity: .9; }
+  #panel button { font: 600 11px Inter; padding: 4px 8px; border-radius: 6px; border: 1px solid #555; background: #222; color: #fff; cursor: pointer; }
+  #log { position: fixed; left: 8px; top: 8px; z-index: 200; font: 11px ui-monospace, monospace; color: #9f9; max-width: 30vw; }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="ui"></div>
+<div id="panel"></div>
+<div id="log"></div>
+<script type="module">
+import { buildRoadNetwork, carreraX, calleZ } from '/src/config.js';
+import { events } from '/src/core/events.js';
+import { state, addMoney } from '/src/core/state.js';
+import { createHUD } from '/src/ui/hud.js';
+import { createMinimap } from '/src/ui/minimap.js';
+import { createDialog } from '/src/ui/dialog.js';
+import { createTitle } from '/src/ui/title.js';
+
+const q = new URLSearchParams(location.search);
+const net = buildRoadNetwork();
+const vehicle = { def: { label: 'Taxi Amarillito', maxSpeed: 38 }, type: 'taxi', speed: 0, health: 80, isPolice: false };
+const cops = [0, 1, 2].map((i) => ({ isPolice: true, destroyed: false, position: { x: 0, z: 0 }, _i: i }));
+const world = {
+  net, state, events, time: 0, peds: [], vehicles: [vehicle, ...cops],
+  player: {
+    position: { x: carreraX(9) + 9, y: 0, z: calleZ(7) - 20 }, heading: 0, health: 100, vehicle: null,
+    get isDriving() { return !!this.vehicle; },
+    get cameraTarget() { return { position: this.position, heading: this.heading, speed: this.vehicle ? this.vehicle.speed : 0, isDriving: !!this.vehicle }; },
+  },
+};
+vehicle.position = { x: 0, z: 0 };
+window.world = world; window.state = state; window.events = events;
+
+const ui = document.getElementById('ui');
+const hud = createHUD(ui), mm = createMinimap(ui, net), dlg = createDialog(ui);
+let sim = { drive: false, turn: 0 };
+let last = performance.now(), maxMs = 0, sumMs = 0, n = 0;
+function loop(t) {
+  requestAnimationFrame(loop);
+  const dt = Math.min((t - last) / 1000, 0.05); last = t;
+  world.time += dt;
+  const p = world.player;
+  if (sim.drive) {
+    vehicle.speed = 12 + 10 * Math.sin(world.time * 0.4) + 4;
+    p.heading += sim.turn * dt;
+    p.position.x += -Math.sin(p.heading) * vehicle.speed * dt;
+    p.position.z += -Math.cos(p.heading) * vehicle.speed * dt;
+  }
+  vehicle.position.x = p.position.x; vehicle.position.z = p.position.z;
+  cops.forEach((c, i) => { c.position.x = p.position.x + Math.cos(world.time + i * 2) * (40 + i * 60); c.position.z = p.position.z + Math.sin(world.time + i * 2) * (40 + i * 60); });
+  hud.update(dt, world); mm.update(dt, world); dlg.update(dt, world);
+  const m = performance.now() - t; // update cost only (approx)
+  sumMs += mm.lastMs; n++; maxMs = Math.max(maxMs, mm.lastMs);
+  if (n % 60 === 0) { document.getElementById('log').textContent = `minimap avg ${(sumMs / n).toFixed(2)}ms max ${maxMs.toFixed(2)}ms`; window.__mmStats = { avg: sumMs / n, max: maxMs }; }
+}
+requestAnimationFrame(loop);
+
+const btns = {
+  'drive on/off': () => { sim.drive = !sim.drive; world.player.vehicle = sim.drive ? vehicle : null; sim.turn = sim.drive ? 0.5 : 0; },
+  '+$50.000': () => addMoney(50000, 'test'),
+  '-$12.500': () => addMoney(-12500, 'test'),
+  'wanted 0': () => { state.wanted = 0; events.emit('wanted:change', { level: 0 }); },
+  'wanted 2': () => { state.wanted = 2; events.emit('wanted:change', { level: 2 }); },
+  'wanted 5': () => { state.wanted = 5; events.emit('wanted:change', { level: 5 }); },
+  'rain': () => { state.raining = !state.raining; },
+  'night': () => { state.hour = 22.3; },
+  'notify info': () => events.emit('notify', { text: 'Pico y placa: hoy no puede circular el 7', kind: 'info' }),
+  'notify good': () => events.emit('notify', { text: '+$ 20.000 por entregar el tinto', kind: 'good' }),
+  'notify bad': () => events.emit('notify', { text: 'Se le dañó el carro, sumercé', kind: 'bad' }),
+  'radio': () => events.emit('radio:change', { station: 'Tropicombo 98.7' }),
+  'radio off': () => events.emit('radio:change', { station: 'Radio apagada' }),
+  'prompt F': () => events.emit('prompt', { text: 'F — Robar taxi' }),
+  'prompt E': () => events.emit('prompt', { text: 'E — Hablar con Doña Gloria' }),
+  'prompt clear': () => events.emit('prompt', { text: null }),
+  'district': () => events.emit('district:change', { name: ['Chapinero', 'Zona T', 'La Candelaria', 'Usaquén'][Math.floor(Math.random() * 4)] }),
+  'BUSTED': () => events.emit('player:busted', {}),
+  'WASTED': () => events.emit('player:wasted', {}),
+  'pause': () => { state.paused = !state.paused; },
+  'ai on/off': () => { state.aiEnabled = !state.aiEnabled; },
+  'talk vendor': () => events.emit('npc:talk', { ped: { kind: 'vendor', name: 'Doña Gloria', position: world.player.position } }),
+  'talk abuela': () => events.emit('npc:talk', { ped: { kind: 'abuela', name: 'Doña Rosita', position: world.player.position } }),
+  'hp 20': () => { world.player.health = 20; },
+  'title': () => createTitle(ui).then(() => document.getElementById('log').textContent = 'title resolved'),
+};
+const panel = document.getElementById('panel');
+for (const [k, fn] of Object.entries(btns)) { const b = document.createElement('button'); b.textContent = k; b.onclick = fn; panel.append(b); }
+window.__btns = btns;
+if (q.has('title')) btns.title();
+</script>
+</body>
+</html>

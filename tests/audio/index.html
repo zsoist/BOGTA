@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<title>Audio harness — GTA Bogotá</title>
+<style>
+  body { font: 13px/1.4 system-ui, sans-serif; background: #111; color: #eee; margin: 16px; max-width: 1000px; }
+  h1 { font-size: 18px; } h2 { font-size: 13px; margin: 14px 0 6px; color: #f5c518; text-transform: uppercase; letter-spacing: .08em; }
+  button { background: #2a2a33; color: #fff; border: 1px solid #444; padding: 6px 10px; margin: 2px; border-radius: 4px; cursor: pointer; }
+  button:hover { background: #3a3a48; } button.on { background: #1d6b3a; }
+  label { margin-right: 14px; } input[type=range] { vertical-align: middle; width: 160px; }
+  pre { background: #000; padding: 8px; border-radius: 4px; max-height: 240px; overflow: auto; }
+  canvas { background: #000; width: 100%; height: 90px; display: block; margin: 4px 0; }
+  .row { margin: 4px 0; }
+</style>
+</head>
+<body>
+<h1>GTA Bogotá — audio harness</h1>
+<div class="row"><button id="unlock">1. Unlock audio</button> keys also work here: <b>Q</b> radio, <b>H</b> horn (hold), <b>M</b> mute, <b>W/S/A/D/Space</b> drive input</div>
+
+<h2>Radio (only plays while "driving")</h2>
+<div class="row" id="stations"></div>
+<div class="row"><button id="qkey">Q (cycle)</button> <button id="dj">Force DJ line</button> <button id="drive">Toggle driving</button> <span id="status"></span></div>
+
+<h2>Fake vehicle</h2>
+<div class="row">
+  <label>type <select id="vtype"></select></label>
+  <label>speed <input id="speed" type="range" min="0" max="45" step="0.5" value="0" /> <span id="speedv">0</span> m/s</label>
+  <label>throttle <input id="thr" type="range" min="-1" max="1" step="0.05" value="0" /></label>
+  <label>lateral slip <input id="slip" type="range" min="0" max="10" step="0.1" value="0" /></label>
+  <label>health <input id="health" type="range" min="0" max="100" value="100" /></label>
+</div>
+<div class="row"><button id="auto">Auto-accelerate 0→max→0</button> <button id="handbrake">Handbrake (hold)</button></div>
+
+<h2>SFX</h2>
+<div class="row">
+  <button data-sfx="horn">Horn (player, hold)</button>
+  <button data-sfx="honkNear">Traffic honk (near)</button><button data-sfx="honkFar">Traffic honk (far)</button>
+  <label>crash <input id="crashI" type="range" min="0.05" max="1" step="0.05" value="0.6" /></label><button data-sfx="crash">Crash</button>
+  <button data-sfx="explosion">Explosion</button><button data-sfx="whoosh">Whoosh</button>
+</div>
+<div class="row">
+  <button data-sfx="siren">Police siren (toggle)</button><label>distance <input id="sirD" type="range" min="5" max="150" value="40" /></label>
+  <button data-sfx="yelp">Wanted 3★ (yelp)</button>
+  <button data-sfx="rain">Rain (toggle)</button><button data-sfx="thunder">Thunder</button>
+</div>
+<div class="row">
+  <button data-ev="notify:info">notify info</button><button data-ev="notify:good">notify good</button><button data-ev="notify:bad">notify bad</button>
+  <button data-ev="cash">+$ cash</button><button data-ev="cashbig">+$$$ cash</button><button data-ev="loss">-$</button>
+  <button data-ev="wanted+">wanted ↑</button><button data-ev="wanted-">wanted ↓</button>
+  <button data-ev="busted">BUSTED</button><button data-ev="wasted">WASTED</button>
+  <button data-sfx="door">Door</button><button data-sfx="step">Footstep</button><button data-sfx="walk">Walk 3s</button>
+  <button data-ev="speak">Speak (NPC)</button>
+</div>
+
+<h2>Offline render (sanity: levels / clipping / rhythm) — 24 s per genre</h2>
+<div class="row"><button id="offline">Render all genres</button> <span id="offstatus"></span></div>
+<div id="plots"></div>
+<pre id="log"></pre>
+
+<script type="module">
+import { createAudio } from '../../src/audio/audio.js';
+import { events } from '../../src/core/events.js';
+import { state } from '../../src/core/state.js';
+import { input } from '../../src/core/input.js';
+import { RADIO_STATIONS } from '../../src/config.js';
+import { Radio } from '../../src/audio/radio.js';
+import { profileFor } from '../../src/audio/engine.js';
+
+const $ = (id) => document.getElementById(id);
+const log = (...a) => { $('log').textContent += a.join(' ') + '\n'; $('log').scrollTop = 1e9; };
+window.__errors = [];
+addEventListener('error', (e) => { window.__errors.push(String(e.message)); log('ERROR', e.message); });
+addEventListener('unhandledrejection', (e) => { window.__errors.push(String(e.reason)); log('REJECT', e.reason); });
+
+const audio = createAudio(); window.__audio = audio;
+const types = ['taxi', 'sedan', 'moto', 'transmilagro', 'sitp', 'buseta', 'chiva', 'police', 'policeMoto'];
+const maxSpeeds = { taxi: 30, sedan: 32, moto: 38, transmilagro: 20, sitp: 20, buseta: 22, chiva: 17, police: 36, policeMoto: 40 };
+for (const t of types) $('vtype').add(new Option(t, t));
+
+// ---- fake world
+const veh = { type: 'taxi', def: { maxSpeed: 30 }, position: { x: 0, y: 0, z: 0 }, heading: 0, speed: 0, velocity: { x: 0, y: 0, z: 0 }, health: 100, destroyed: false, driver: 'player', isPolice: false };
+const player = { isDriving: false, vehicle: null, position: veh.position, heading: 0 };
+const police = { type: 'police', def: { maxSpeed: 36 }, position: { x: 40, y: 0, z: 0 }, speed: 0, isPolice: true, sirenOn: false, destroyed: false };
+const traffic = Array.from({ length: 6 }, (_, i) => ({ type: 'sedan', def: { maxSpeed: 25 }, position: { x: 12 + i * 9, y: 0, z: 5 }, speed: 10 + i, isPolice: false, destroyed: false }));
+const camera = { position: veh.position, matrixWorld: { elements: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1] } };
+const world = { player, camera, vehicles: [veh, police, ...traffic], peds: [], state, events, time: 0, net: { roadAt: () => false } };
+window.world = world;
+
+function setDriving(on) { player.isDriving = on; player.vehicle = on ? veh : null; $('drive').classList.toggle('on', on); }
+$('drive').onclick = () => { audio.unlock(); setDriving(!player.isDriving); };
+setDriving(true);
+
+$('unlock').onclick = () => { audio.unlock(); log('unlocked, ctx state:', audio.ctx?.state); };
+for (const [i, s] of RADIO_STATIONS.entries()) {
+  const b = document.createElement('button'); b.textContent = `${i}: ${s.name}`; b.onclick = () => { audio.unlock(); setDriving(true); audio.setStation(i, true); }; $('stations').append(b);
+}
+$('qkey').onclick = () => { audio.unlock(); setDriving(true); audio.cycleStation(); };
+$('dj').onclick = () => { audio.unlock(); state.stationIndex = RADIO_STATIONS.findIndex((s) => s.genre === 'talk'); setDriving(true); setTimeout(() => { audio.radio.djTimer = 0; }, 300); };
+events.on('radio:change', (e) => log('radio:change →', e.station.name));
+events.on('notify', (e) => log('notify', e.kind, e.text));
+
+// ---- vehicle controls
+$('vtype').onchange = () => { veh.type = $('vtype').value; veh.def.maxSpeed = maxSpeeds[veh.type]; $('speed').max = Math.ceil(veh.def.maxSpeed * 1.1); };
+$('speed').oninput = () => { veh.speed = +$('speed').value; $('speedv').textContent = veh.speed.toFixed(1); };
+$('health').oninput = () => { veh.health = +$('health').value; };
+let auto = false, autoT = 0;
+$('auto').onclick = () => { audio.unlock(); setDriving(true); auto = !auto; autoT = 0; $('auto').classList.toggle('on', auto); };
+const held = { thr: 0 };
+$('thr').oninput = () => { held.thr = +$('thr').value; };
+$('handbrake').onmousedown = () => { window.__hb = true; }; $('handbrake').onmouseup = () => { window.__hb = false; };
+
+// ---- sfx buttons
+let sirenOn = false, rainOn = false;
+document.querySelectorAll('[data-sfx]').forEach((b) => b.addEventListener('click', () => {
+  audio.unlock();
+  const k = b.dataset.sfx, S = audio.sfx;
+  if (!S) { log('audio not ready (unlock first)'); return; }
+  if (k === 'honkNear') events.emit('horn', { vehicle: traffic[0] });
+  else if (k === 'honkFar') events.emit('horn', { x: 70, z: 20 });
+  else if (k === 'crash') events.emit('crash', { intensity: +$('crashI').value, x: 3, z: 3 });
+  else if (k === 'explosion') S.explosion(1, 0);
+  else if (k === 'whoosh') S.whoosh(0.8, 0.5, 0.7);
+  else if (k === 'siren') { sirenOn = !sirenOn; police.sirenOn = sirenOn; b.classList.toggle('on', sirenOn); }
+  else if (k === 'yelp') { state.wanted = state.wanted >= 3 ? 0 : 3; b.classList.toggle('on', state.wanted >= 3); }
+  else if (k === 'rain') { rainOn = !rainOn; state.raining = rainOn; b.classList.toggle('on', rainOn); }
+  else if (k === 'thunder') S.thunder(1);
+  else if (k === 'door') S.door();
+  else if (k === 'step') S.step(false, false);
+  else if (k === 'walk') { setDriving(false); let n = 0; const iv = setInterval(() => { player.position.x += 0.9; if (++n > 12) { clearInterval(iv); setDriving(true); } }, 150); }
+}));
+const hornBtn = document.querySelector('[data-sfx="horn"]');
+hornBtn.addEventListener('mousedown', () => { audio.unlock(); window.__hornDown = true; });
+addEventListener('mouseup', () => { window.__hornDown = false; });
+document.querySelectorAll('[data-ev]').forEach((b) => b.addEventListener('click', () => {
+  audio.unlock();
+  const k = b.dataset.ev;
+  if (k.startsWith('notify:')) events.emit('notify', { text: `Prueba ${k.slice(7)}`, kind: k.slice(7) });
+  else if (k === 'cash') events.emit('money:change', { amount: 1, delta: 20000, reason: 'test' });
+  else if (k === 'cashbig') events.emit('money:change', { amount: 1, delta: 500000, reason: 'test' });
+  else if (k === 'loss') events.emit('money:change', { amount: 1, delta: -20000, reason: 'test' });
+  else if (k === 'wanted+') { state.wanted = Math.min(5, state.wanted + 1); events.emit('wanted:change', { level: state.wanted }); }
+  else if (k === 'wanted-') { state.wanted = Math.max(0, state.wanted - 1); events.emit('wanted:change', { level: state.wanted }); }
+  else if (k === 'busted') events.emit('player:busted', {});
+  else if (k === 'wasted') events.emit('player:wasted', {});
+  else if (k === 'speak') audio.speak('¿Qué más, parce? Hoy está haciendo un frío berraco, ¿le provoca un tinto?', 'vendor');
+}));
+
+// ---- loop (mirrors main.js: audio.update then input.endFrame)
+let last = performance.now();
+function frame(ts) {
+  requestAnimationFrame(frame);
+  const dt = Math.min((ts - last) / 1000, 0.05); last = ts;
+  if (auto) {
+    autoT += dt; const mx = veh.def.maxSpeed, per = 14;
+    const ph = (autoT % (per * 2)) / per; // 0..2
+    veh.speed = ph < 1 ? mx * ph : mx * (2 - ph); held.thr = ph < 1 ? 1 : -0.6; $('speed').value = veh.speed;
+  }
+  $('speedv').textContent = veh.speed.toFixed(1);
+  veh.controls = { throttle: held.thr || (input.throttle) };
+  const slip = +$('slip').value, h = veh.heading;
+  veh.velocity.x = Math.cos(h) * slip - Math.sin(h) * veh.speed; veh.velocity.z = -Math.sin(h) * slip - Math.cos(h) * veh.speed;
+  if (window.__hb) { veh.speed = Math.max(veh.speed, 12); }
+  const sd = +$('sirD').value; police.position.x = sd;
+  for (const t of traffic) { t.position.x += (t.speed * dt) * 0.0; }
+  if (window.__hornDown) events.emit('horn', {});
+  audio.update(dt, world);
+  input.endFrame();
+  if (audio.radio) $('status').textContent = `ctx=${audio.ctx.state} station=${state.stationIndex} (${RADIO_STATIONS[state.stationIndex]?.name}) mode=${audio.radio.cur?.mode || '-'} gear=${audio.engine.gear} rpm=${audio.engine.rpm.toFixed(2)} speaking=${audio.radio.speaking}`;
+}
+requestAnimationFrame(frame);
+
+// ---- offline render analysis
+async function renderGenre(def, seconds = 24) {
+  const sr = 44100, ctx = new OfflineAudioContext(2, sr * seconds, sr);
+  const radio = new Radio(ctx, ctx.destination);
+  radio.fade.gain.value = 1;
+  radio.tune(def, { announce: false });
+  radio.cur.seq.nextTime = 0.05;
+  radio.cur.seq.secIdx = 0;
+  for (let t = 0; t < seconds; t += 0.4) radio.tick(t, 0.45);
+  const buf = await ctx.startRendering();
+  const d = buf.getChannelData(0);
+  let peak = 0, sum = 0, nan = 0, clip = 0;
+  for (let i = 0; i < d.length; i++) { const v = d[i]; if (v !== v) nan++; const a = Math.abs(v); if (a > peak) peak = a; if (a >= 0.999) clip++; sum += v * v; }
+  const rms = Math.sqrt(sum / d.length);
+  // energy envelope (10 ms) for plotting
+  const win = Math.floor(sr * 0.01), env = [];
+  for (let i = 0; i + win < d.length; i += win) { let e = 0; for (let j = 0; j < win; j++) e += d[i + j] * d[i + j]; env.push(Math.sqrt(e / win)); }
+  return { genre: def.genre, peak, rms, peakDb: 20 * Math.log10(peak + 1e-9), rmsDb: 20 * Math.log10(rms + 1e-9), nan, clip, env };
+}
+function plot(name, env) {
+  const c = document.createElement('canvas'); c.width = 1000; c.height = 90; $('plots').append(Object.assign(document.createElement('div'), { textContent: name }), c);
+  const g = c.getContext('2d'); g.fillStyle = '#6fd36f'; const mx = Math.max(...env, 1e-6);
+  env.forEach((v, i) => { const x = (i / env.length) * 1000, h = (v / mx) * 85; g.fillRect(x, 90 - h, 1.2, h); });
+}
+$('offline').onclick = async () => {
+  $('offstatus').textContent = 'rendering…'; $('plots').innerHTML = ''; window.__offline = [];
+  for (const def of RADIO_STATIONS.filter((s) => s.genre)) {
+    const r = await renderGenre(def);
+    window.__offline.push({ genre: r.genre, peakDb: +r.peakDb.toFixed(1), rmsDb: +r.rmsDb.toFixed(1), nan: r.nan, clip: r.clip });
+    log(`${def.id.padEnd(11)} peak ${r.peakDb.toFixed(1)} dBFS  rms ${r.rmsDb.toFixed(1)} dBFS  nan=${r.nan} clip=${r.clip}`);
+    plot(def.name, r.env);
+  }
+  $('offstatus').textContent = 'done'; window.__offlineDone = true;
+};
+window.__profileFor = profileFor;
+</script>
+</body>
+</html>

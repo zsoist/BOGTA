@@ -1,0 +1,11 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>AI harness</title>
+<style>html,body{margin:0;height:100%;overflow:hidden;background:#222;color:#fff;font:12px ui-monospace,monospace}#hud{position:fixed;left:8px;top:8px;background:#0008;padding:6px 8px;white-space:pre;pointer-events:none}#log{position:fixed;right:8px;top:8px;width:340px;background:#0008;padding:6px;white-space:pre-wrap;pointer-events:none}canvas{display:block}</style>
+<script>
+// Test-only import map: the real Vehicle (src/entities/vehicle.js) is used unless ?stub=1.
+const q = new URLSearchParams(location.search);
+const im = { imports: { three: 'https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js', 'three/addons/': 'https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/' } };
+if (q.get('stub') === '1') im.imports['/src/entities/vehicle.js'] = '/tests/ai/stub-vehicle.js';
+const s = document.createElement('script'); s.type = 'importmap'; s.textContent = JSON.stringify(im); document.head.appendChild(s);
+</script></head>
+<body><div id="hud"></div><div id="log"></div><script type="module" src="./harness.js"></script></body></html>

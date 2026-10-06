@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="es-CO">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GTA Bogotá</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;800&family=Bangers&display=swap" rel="stylesheet" />
+  <script type="importmap">
+  { "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/"
+  } }
+  </script>
+  <style>
+    :root { --gta-green: #6fd36f; --gta-gold: #f5c518; --ink: #0b0b0f; }
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0b0f; color: #fff; font-family: Inter, system-ui, sans-serif; }
+    #game { position: fixed; inset: 0; display: block; }
+    #ui { position: fixed; inset: 0; pointer-events: none; }
+    #ui > * { pointer-events: auto; }
+    #boot-error { position: fixed; left: 16px; bottom: 16px; max-width: 70ch; background: #300; color: #fbb; padding: 12px; font: 12px/1.4 ui-monospace, monospace; white-space: pre-wrap; display: none; z-index: 99; }
+  </style>
+</head>
+<body>
+  <canvas id="game"></canvas>
+  <div id="ui"></div>
+  <pre id="boot-error"></pre>
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,33 @@
+{
+  "name": "gta-bogota-trailer",
+  "version": "1.0.0",
+  "private": true,
+  "description": "GTA Bogotá — AAA motion-design trailer (Remotion 4)",
+  "type": "module",
+  "scripts": {
+    "sync": "node scripts/sync-assets.mjs",
+    "studio": "npm run sync && remotion studio src/index.ts",
+    "still": "npm run sync && remotion still src/index.ts Trailer",
+    "render": "npm run sync && remotion render src/index.ts Trailer out/gta-bogota-trailer.mp4 --codec=h264 --crf=16 --concurrency=8",
+    "render:vertical": "npm run sync && remotion render src/index.ts TrailerVertical out/gta-bogota-vertical.mp4 --codec=h264 --crf=18 --concurrency=8",
+    "render:draft": "npm run sync && remotion render src/index.ts Trailer out/draft.mp4 --scale=0.5 --crf=28 --concurrency=8",
+    "footage:doc": "node scripts/gen-footage-doc.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.533",
+    "@remotion/google-fonts": "4.0.533",
+    "@remotion/media": "4.0.533",
+    "@remotion/noise": "4.0.533",
+    "@remotion/paths": "4.0.533",
+    "@remotion/shapes": "4.0.533",
+    "@remotion/transitions": "4.0.533",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "remotion": "4.0.533"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.2",
+    "typescript": "5.9.3"
+  }
+}

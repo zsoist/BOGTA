@@ -1,0 +1,14 @@
+{
+  "name": "gta-bogota",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "GTA Bogotá — free-roam low-poly 3D parody of Bogotá with Claude-powered NPCs",
+  "scripts": {
+    "start": "node --env-file-if-exists=.env server/server.mjs",
+    "dev": "node --watch --env-file-if-exists=.env server/server.mjs"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "latest"
+  }
+}
